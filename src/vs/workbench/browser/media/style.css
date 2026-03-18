@@ -333,3 +333,73 @@ body {
 	outline: 1px dashed var(--vscode-toolbar-hoverOutline);
 	outline-offset: -1px;
 }
+
+/* ── ephcode custom UI ─────────────────────────────────────────────────────── */
+
+/* Hide the native title bar container */
+.container > .title {
+	display: none !important;
+}
+
+.monaco-workbench .part.titlebar {
+	display: none !important;
+	height: 0 !important;
+	min-height: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+}
+
+/* Push tabs right to clear macOS traffic lights (hiddenInset = ~80px) */
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container {
+	margin-left: 80px !important;
+}
+
+/* Make the tab bar the drag region for the window */
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-and-actions-container {
+	position: relative;
+	-webkit-app-region: drag !important;
+}
+
+/* Extend drag area above the tab bar (fills gap from hidden title bar) */
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-and-actions-container::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: -6px;
+	width: 100%;
+	height: 6px;
+	-webkit-app-region: drag;
+}
+
+/* Tabs themselves must not be draggable */
+.monaco-workbench .part.editor .title .tab,
+.monaco-workbench .part.editor .title .tab * {
+	-webkit-app-region: no-drag !important;
+}
+
+.monaco-workbench .part.editor .title .editor-actions,
+.monaco-workbench .part.editor .title .tabs-and-actions-container .actions-container {
+	-webkit-app-region: no-drag !important;
+}
+
+/* Quick open: drop it lower so it doesn't sit at the very top */
+.quick-input-widget {
+	top: 25vh !important;
+}
+
+/* Find widget: flatten the shadow, round the corners */
+.editor-widget.find-widget {
+	box-shadow: none;
+	border-radius: 4px;
+}
+
+/* Sidebar: remove unnecessary padding and border */
+.sidebar .title-label {
+	padding: 0 !important;
+}
+
+.sidebar {
+	border: none !important;
+}
+
+/* ───────────────────────────────────────────────────────────────────────────── */
