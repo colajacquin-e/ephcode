@@ -443,20 +443,6 @@ export abstract class BaseWindow extends Disposable implements IBaseWindow {
 				height: options.height ? options.height - 1 : undefined // account for window border
 			});
 		}
-
-		// macOS: update window controls via setWindowButtonPosition()
-		else if (isMacintosh && options.height !== undefined) {
-			// When the position is set, the horizontal margin is offset to ensure
-			// the distance between the traffic lights and the window frame is equal
-			// in both directions.
-			const buttonHeight = isTahoeOrNewer(release()) ? 14 : 16;
-			const offset = Math.floor((options.height - buttonHeight) / 2);
-			if (!offset) {
-				win.setWindowButtonPosition(null);
-			} else {
-				win.setWindowButtonPosition({ x: offset + 1, y: offset });
-			}
-		}
 	}
 
 	private dimColor(color: string): string {

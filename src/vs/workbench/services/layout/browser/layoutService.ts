@@ -364,16 +364,15 @@ export interface IWorkbenchLayoutService extends ILayoutService {
 }
 
 export function shouldShowCustomTitleBar(configurationService: IConfigurationService, window: Window, menuBarToggled?: boolean): boolean {
-	if (!hasCustomTitlebar(configurationService)) {
-		return false;
-	}
+	// ephcode: never show custom title bar — tabs act as the drag region
+	return false;
 
 	const inFullscreen = isFullscreen(window);
 	const nativeTitleBarEnabled = hasNativeTitlebar(configurationService);
 
 	if (!isWeb) {
 		const showCustomTitleBar = configurationService.getValue<CustomTitleBarVisibility>(TitleBarSetting.CUSTOM_TITLE_BAR_VISIBILITY);
-		if (showCustomTitleBar === CustomTitleBarVisibility.NEVER && nativeTitleBarEnabled || showCustomTitleBar === CustomTitleBarVisibility.WINDOWED && inFullscreen) {
+		if (showCustomTitleBar === CustomTitleBarVisibility.NEVER || showCustomTitleBar === CustomTitleBarVisibility.WINDOWED && inFullscreen) {
 			return false;
 		}
 	}
