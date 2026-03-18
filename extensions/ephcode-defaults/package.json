@@ -74,7 +74,7 @@
 			},
 			"workbench.activityBar.location": "hidden",
 			"workbench.startupEditor": "none",
-			"workbench.colorTheme": "Monokai",
+			"workbench.colorTheme": "ephcode Dark Forest",
 			"workbench.statusBar.visible": false,
 			"workbench.sideBar.location": "right",
 			"git.autofetch": true,

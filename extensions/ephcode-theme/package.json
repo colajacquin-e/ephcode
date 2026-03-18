@@ -1,0 +1,22 @@
+{
+	"name": "ephcode-theme",
+	"displayName": "ephcode Dark Forest",
+	"description": "Dark forest green theme with orange accents for ephcode",
+	"version": "1.0.0",
+	"publisher": "ephcode",
+	"engines": {
+		"vscode": "*"
+	},
+	"categories": [
+		"Themes"
+	],
+	"contributes": {
+		"themes": [
+			{
+				"label": "ephcode Dark Forest",
+				"uiTheme": "vs-dark",
+				"path": "./themes/ephcode-dark.json"
+			}
+		]
+	}
+}
