@@ -70,6 +70,7 @@
 			"window.nativeTabs": false,
 			"window.titleBarStyle": "custom",
 			"window.customTitleBarVisibility": "never",
+			"workbench.editor.closeEmptyGroups": true,
 			"workbench.editor.showIcons": true,
 			"workbench.editor.editorActionsLocation": "default",
 			"workbench.editor.showTabs": "multiple",

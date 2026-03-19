@@ -31,7 +31,10 @@ export class EphcodePersistentActionsContribution extends Disposable implements 
 		};
 
 		this._register(this.editorGroupsService.onDidChangeActiveGroup(() => checkAndUpdate()));
-		this._register(this.editorGroupsService.onDidAddGroup(() => checkAndUpdate()));
+		this._register(this.editorGroupsService.onDidAddGroup(() => {
+			checkAndUpdate();
+			this.closeEmptyGroups();
+		}));
 		this._register(this.editorGroupsService.onDidRemoveGroup(() => checkAndUpdate()));
 
 		// Listen for editor open/close in active group
@@ -39,7 +42,10 @@ export class EphcodePersistentActionsContribution extends Disposable implements 
 			const group = this.editorGroupsService.activeGroup;
 			if (group) {
 				this._register(group.onDidOpenEditorFail(() => checkAndUpdate()));
-				this._register(group.onDidCloseEditor(() => checkAndUpdate()));
+				this._register(group.onDidCloseEditor(() => {
+					checkAndUpdate();
+					this.closeEmptyGroups();
+				}));
 				this._register(group.onDidModelChange(() => checkAndUpdate()));
 			}
 		};
@@ -48,6 +54,22 @@ export class EphcodePersistentActionsContribution extends Disposable implements 
 
 		// Initial check
 		checkAndUpdate();
+	}
+
+	private closeEmptyGroups(): void {
+		// ephcode: auto-close empty editor groups to prevent split view buildup
+		// ephcode: short delay to let editors open in new groups before checking
+		mainWindow.setTimeout(() => {
+			const groups = this.editorGroupsService.groups;
+			if (groups.length <= 1) {
+				return;
+			}
+			for (const group of groups) {
+				if (group.count === 0) {
+					this.editorGroupsService.removeGroup(group);
+				}
+			}
+		}, 1);
 	}
 
 	private updateClaudeButton(): void {
@@ -69,17 +91,17 @@ export class EphcodePersistentActionsContribution extends Disposable implements 
 			return; // already showing
 		}
 
-		// Find the tabs-and-actions-container
+		// Find the editor part (always exists, unlike tabs container)
 		// eslint-disable-next-line no-restricted-syntax
-		const container = mainWindow.document.querySelector('.monaco-workbench .part.editor .tabs-and-actions-container');
-		if (!container) {
+		const editorPart = mainWindow.document.querySelector('.monaco-workbench .part.editor');
+		if (!editorPart) {
 			return;
 		}
 
 		this.claudeButton = mainWindow.document.createElement('div');
 		this.claudeButton.style.cssText = `
-			display: flex; align-items: center; justify-content: flex-end;
-			padding: 0 8px; margin-left: auto; height: 100%;
+			position: absolute; top: 0; right: 8px; height: 35px;
+			display: flex; align-items: center; z-index: 3;
 			-webkit-app-region: no-drag;
 		`;
 
@@ -88,7 +110,7 @@ export class EphcodePersistentActionsContribution extends Disposable implements 
 		btn.title = 'Open Claude Code';
 		btn.role = 'button';
 		btn.style.cssText = `
-			width: 22px; height: 22px; font-size: 16px;
+			width: 28px; height: 28px; font-size: 16px;
 			display: flex; align-items: center; justify-content: center;
 			cursor: pointer; color: #9a9ea4; border-radius: 4px;
 			transition: color 0.15s, background 0.15s;
@@ -103,10 +125,12 @@ export class EphcodePersistentActionsContribution extends Disposable implements 
 		});
 		btn.addEventListener('click', (e) => {
 			e.stopPropagation();
-			this.commandService.executeCommand('claude-vscode.editor.openLast');
+			this.commandService.executeCommand('claude-vscode.editor.open').then(undefined, () => {
+				this.commandService.executeCommand('workbench.action.terminal.toggleTerminal');
+			});
 		});
 
 		this.claudeButton.appendChild(btn);
-		container.appendChild(this.claudeButton);
+		editorPart.appendChild(this.claudeButton);
 	}
 }

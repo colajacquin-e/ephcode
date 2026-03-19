@@ -336,6 +336,30 @@ body {
 
 /* -- ephcode custom UI -------------------------------------------------------- */
 
+/* Persistent drag bar at top of editor area — visible when no tabs open */
+.monaco-workbench .part.editor {
+	position: relative;
+}
+
+.monaco-workbench .part.editor::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 35px;
+	background: #1b1d20;
+	-webkit-app-region: drag;
+	z-index: 1;
+	pointer-events: auto;
+}
+
+/* Tabs sit above the drag bar when present */
+.monaco-workbench .part.editor > .content .editor-group-container > .title {
+	position: relative;
+	z-index: 2;
+}
+
 /* Hide activity bar completely */
 .monaco-workbench .part.activitybar {
 	display: none !important;
@@ -355,9 +379,14 @@ body {
 	border: 0 !important;
 }
 
-/* Push tabs right to clear macOS traffic lights (hiddenInset = ~80px) */
+/* Push tabs right to clear macOS traffic lights (leftmost group only) */
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container {
 	margin-left: 80px !important;
+}
+
+/* Remove traffic light cutout from non-leftmost groups in split view */
+.monaco-workbench .part.editor .split-view-view + .split-view-view .editor-group-container > .title .tabs-container {
+	margin-left: 0 !important;
 }
 
 /* Make the tab bar the drag region for the window */

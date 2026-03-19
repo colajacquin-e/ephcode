@@ -507,13 +507,17 @@ export class EditorGroupView extends Themable implements IEditorGroupView {
 
 	private updateContainer(): void {
 
-		// ephcode: never add 'empty' class — always show the title bar
-		// for window dragging and action icons
-		this.element.classList.remove('empty');
+		// Empty Container: add some empty container attributes
 		if (this.isEmpty) {
+			this.element.classList.add('empty');
 			this.element.tabIndex = 0;
 			this.element.setAttribute('aria-label', localize('emptyEditorGroup', "{0} (empty)", this.ariaLabel));
-		} else {
+
+		}
+
+		// Non-Empty Container: revert empty container attributes
+		else {
+			this.element.classList.remove('empty');
 			this.element.removeAttribute('tabIndex');
 			this.element.removeAttribute('aria-label');
 		}
@@ -2149,7 +2153,7 @@ export class EditorGroupView extends Themable implements IEditorGroupView {
 	readonly element: HTMLElement = $('div');
 
 	get minimumWidth(): number { return this.editorPane.minimumWidth; }
-	get minimumHeight(): number { return Math.max(this.editorPane.minimumHeight, 35); } // ephcode: ensure space for tab bar
+	get minimumHeight(): number { return this.editorPane.minimumHeight; }
 	get maximumWidth(): number { return this.editorPane.maximumWidth; }
 	get maximumHeight(): number { return this.editorPane.maximumHeight; }
 

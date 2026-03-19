@@ -635,8 +635,7 @@ export class MultiEditorTabsControl extends EditorTabsControl {
 			this.activeTabLabel = undefined;
 			this.tabActionBars = [];
 
-			// ephcode: keep editor actions visible even with no tabs
-			this.updateEditorActionsToolbar();
+			this.clearEditorActionsToolbar();
 			this.updateTabsControlVisibility();
 		}
 	}
@@ -1792,8 +1791,7 @@ export class MultiEditorTabsControl extends EditorTabsControl {
 			height = this.tabHeight;
 		}
 
-		// ephcode: ensure minimum height for drag region when no tabs
-		return Math.max(height, 35);
+		return height;
 	}
 
 	layout(dimensions: IEditorTitleControlDimensions, options?: IMultiEditorTabsControlLayoutOptions): Dimension {
@@ -2158,7 +2156,7 @@ export class MultiEditorTabsControl extends EditorTabsControl {
 	}
 
 	private get visible(): boolean {
-		return true; // ephcode: always show tab bar for drag region
+		return this.tabsModel.count > 0;
 	}
 
 	private getTabAndIndex(editor: EditorInput): [HTMLElement, number /* index */] | undefined {
