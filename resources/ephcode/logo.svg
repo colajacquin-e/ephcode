@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect width="1024" height="1024" rx="180" fill="#1b1d20"/>
+
+  <!-- "> EC" text, bold terminal weight -->
+  <text x="118" y="400" font-family="'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Menlo', 'Consolas', monospace" font-size="220" font-weight="700" letter-spacing="6" fill="#779e7f">
+    <tspan>&gt;</tspan><tspan dx="-90"> EC</tspan>
+  </text>
+
+  <!-- Underscore cursor -->
+  <rect x="610" y="380" width="85" height="46" fill="#b8520a"/>
+</svg>
