@@ -90,6 +90,35 @@
 			}
 		}
 	],
+	"extensionImportantTips": {
+		"llvm-vs-code-extensions.vscode-clangd": { "name": "clangd (C/C++)" },
+		"ms-vscode.cmake-tools": { "name": "CMake Tools" },
+		"eamodio.gitlens": { "name": "GitLens" },
+		"tintinweb.graphviz-interactive-preview": { "name": "Graphviz Interactive Preview" },
+		"SirTori.indenticator": { "name": "Indenticator" },
+		"ms-python.python": { "name": "Python" },
+		"ms-pyright.pyright": { "name": "Pyright" },
+		"mechatroner.rainbow-csv": { "name": "Rainbow CSV" },
+		"rafamel.subtle-brackets": { "name": "Subtle Match Brackets" },
+		"tomoki1207.pdf": { "name": "vscode-pdf" },
+		"Percy.vscode-numpy-viewer": { "name": "vscode-numpy-viewer" }
+	},
+	"trustedExtensionPublishers": [
+		"llvm-vs-code-extensions",
+		"ms-pyright",
+		"ms-vscode",
+		"ms-python",
+		"eamodio",
+		"sirtori",
+		"mechatroner",
+		"rafamel",
+		"tintinweb",
+		"tomoki1207",
+		"ms-vscode-remote",
+		"percy",
+		"anthropic",
+		"microsoft"
+	],
 	"trustedExtensionAuthAccess": {
 		"github": [],
 		"github-enterprise": []

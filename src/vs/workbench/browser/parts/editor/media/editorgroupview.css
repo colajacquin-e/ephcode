@@ -192,8 +192,10 @@
 	height: 1px;
 }
 
+/* ephcode: keep title bar visible when empty for drag region */
 .monaco-workbench .part.editor > .content .editor-group-container.empty > .title {
-	display: none;
+	display: flex;
+	min-height: 35px;
 }
 
 /* Toolbar */

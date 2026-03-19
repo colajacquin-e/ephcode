@@ -48,8 +48,11 @@
 			"editor.inlineSuggest.syntaxHighlightingEnabled": true,
 			"editor.rulers": [100],
 			"editor.renderControlCharacters": false,
+			"breadcrumbs.enabled": true,
+			"breadcrumbs.filePath": "on",
+			"breadcrumbs.symbolPath": "on",
 			"explorer.compactFolders": false,
-			"explorer.openEditors.visible": 1,
+			"explorer.openEditors.visible": 0,
 			"explorer.decorations.colors": false,
 			"explorer.decorations.badges": true,
 			"explorer.fileNesting.enabled": true,
@@ -68,6 +71,9 @@
 			"window.titleBarStyle": "custom",
 			"window.customTitleBarVisibility": "never",
 			"workbench.editor.showIcons": true,
+			"workbench.editor.editorActionsLocation": "default",
+			"workbench.editor.showTabs": "multiple",
+			"window.density.editorTabHeight": "default",
 			"workbench.tree.indent": 16,
 			"workbench.colorCustomizations": {
 				"tab.activeBorder": "#0000"
@@ -77,6 +83,15 @@
 			"workbench.colorTheme": "ephcode Dark Forest",
 			"workbench.statusBar.visible": false,
 			"workbench.sideBar.location": "right",
+			"chat.commandCenter.enabled": false,
+			"chat.editor.enabled": false,
+			"github.copilot.enable": {
+				"*": false,
+				"plaintext": false,
+				"markdown": false,
+				"scminput": false
+			},
+			"workbench.secondarySideBar.defaultOpen": false,
 			"git.autofetch": true,
 			"git.openRepositoryInParentFolders": "never",
 			"files.exclude": {

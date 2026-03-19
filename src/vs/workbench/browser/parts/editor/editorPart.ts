@@ -1298,7 +1298,8 @@ export class EditorPart extends Part<IEditorPartMemento> implements IEditorPart,
 	}
 
 	private updateContainer(): void {
-		this.container.classList.toggle('empty', this.isEmpty);
+		// ephcode: never mark as empty — keep title bar always visible
+		this.container.classList.remove('empty');
 	}
 
 	private notifyGroupIndexChange(): void {

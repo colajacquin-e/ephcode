@@ -206,7 +206,7 @@ import './contrib/notebook/browser/notebook.contribution.js';
 // Speech
 import './contrib/speech/browser/speech.contribution.js';
 
-// Chat
+// Chat (services kept for dependencies, UI hidden via CSS)
 import './contrib/chat/browser/chat.contribution.js';
 import './contrib/inlineChat/browser/inlineChat.contribution.js';
 import './contrib/mcp/browser/mcp.contribution.js';
@@ -318,6 +318,9 @@ import './contrib/tasks/browser/task.contribution.js';
 // Remote
 import './contrib/remote/common/remote.contribution.js';
 import './contrib/remote/browser/remote.contribution.js';
+
+// ephcode
+import './contrib/ephcode/browser/ephcode.contribution.js';
 
 // Emmet
 import './contrib/emmet/browser/emmet.contribution.js';

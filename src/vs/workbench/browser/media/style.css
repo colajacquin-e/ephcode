@@ -334,7 +334,13 @@ body {
 	outline-offset: -1px;
 }
 
-/* ── ephcode custom UI ─────────────────────────────────────────────────────── */
+/* -- ephcode custom UI -------------------------------------------------------- */
+
+/* Hide activity bar completely */
+.monaco-workbench .part.activitybar {
+	display: none !important;
+	width: 0 !important;
+}
 
 /* Hide the native title bar container */
 .container > .title {
@@ -402,4 +408,18 @@ body {
 	border: none !important;
 }
 
-/* ───────────────────────────────────────────────────────────────────────────── */
+/* Always show the tab bar even when no editors are open (drag region) */
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-and-actions-container {
+	min-height: 35px !important;
+}
+
+/* Hide Copilot/Chat UI and secondary sidebar */
+.chat-view-container,
+[id="workbench.panel.chat"],
+[id="workbench.panel.chatEditing"],
+[id="workbench.view.chat.panel"] {
+	display: none !important;
+}
+
+
+/* ----------------------------------------------------------------------------- */

@@ -46,8 +46,10 @@
 	position: relative; /* position tabs border bottom or editor actions (when tabs wrap) relative to this container */
 }
 
+/* ephcode: keep tabs container visible when empty for drag region */
 .monaco-workbench .part.editor > .content .editor-group-container > .title > .tabs-and-actions-container.empty {
-	display: none;
+	display: flex;
+	min-height: 35px;
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title > .tabs-and-actions-container.tabs-border-bottom::after {
