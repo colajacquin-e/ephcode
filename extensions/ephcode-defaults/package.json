@@ -93,6 +93,7 @@
 				"scminput": false
 			},
 			"workbench.secondarySideBar.defaultOpen": false,
+			"extensions.verifySignature": false,
 			"git.autofetch": true,
 			"git.openRepositoryInParentFolders": "never",
 			"files.exclude": {
