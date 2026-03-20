@@ -69,13 +69,13 @@ jobs:
         run: |
           COMMIT=$(git rev-parse HEAD)
           cd ../vscode-reh-linux-${{ matrix.arch }}
-          tar czf ../ephcode-server-linux-${{ matrix.arch }}-${COMMIT}.tar.gz .
+          tar czf ${GITHUB_WORKSPACE}/ephcode-server-linux-${{ matrix.arch }}-${COMMIT}.tar.gz .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ephcode-server-linux-${{ matrix.arch }}
-          path: ../ephcode-server-linux-${{ matrix.arch }}-*.tar.gz
+          path: ephcode-server-linux-${{ matrix.arch }}-*.tar.gz
 
       - name: Create/update release
         if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'
@@ -84,7 +84,7 @@ jobs:
         run: |
           COMMIT=$(git rev-parse HEAD)
           TAG="server-${COMMIT}"
-          ASSET="../ephcode-server-linux-${{ matrix.arch }}-${COMMIT}.tar.gz"
+          ASSET="ephcode-server-linux-${{ matrix.arch }}-${COMMIT}.tar.gz"
 
           # Create release if it doesn't exist
           gh release view "$TAG" 2>/dev/null || \
