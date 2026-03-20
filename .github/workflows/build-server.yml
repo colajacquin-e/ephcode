@@ -17,15 +17,15 @@ jobs:
           - os: ubuntu-latest
             arch: x64
             npm_arch: x64
-            gulp_target: vscode-reh-linux-x64-min
+            gulp_target: vscode-reh-linux-x64
           - os: ubuntu-24.04-arm
             arch: arm64
             npm_arch: arm64
-            gulp_target: vscode-reh-linux-arm64-min
+            gulp_target: vscode-reh-linux-arm64
 
     name: Linux ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -51,6 +51,7 @@ jobs:
         env:
           npm_config_arch: ${{ matrix.npm_arch }}
           VSCODE_ARCH: ${{ matrix.arch }}
+          NODE_OPTIONS: "--max-old-space-size=6144"
         run: npm run gulp ${{ matrix.gulp_target }}
 
       - name: Package server tarball
