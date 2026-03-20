@@ -36,6 +36,15 @@ jobs:
         with:
           node-version-file: .nvmrc
 
+      - name: Add swap space
+        run: |
+          sudo fallocate -l 8G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          echo "Swap enabled:"
+          free -h
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -47,12 +56,30 @@ jobs:
           VSCODE_ARCH: ${{ matrix.arch }}
         run: npm ci
 
-      - name: Build server
+      - name: Compile sources (without mangling)
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
+        run: npm run gulp compile-build-without-mangling
+
+      - name: Compile extensions
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
+        run: |
+          npm run gulp clean-extensions-build
+          npm run gulp compile-non-native-extensions-build
+          npm run gulp compile-extension-media-build
+
+      - name: Bundle server
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
+        run: npm run gulp bundle-vscode-reh
+
+      - name: Package server
         env:
           npm_config_arch: ${{ matrix.npm_arch }}
           VSCODE_ARCH: ${{ matrix.arch }}
           NODE_OPTIONS: "--max-old-space-size=6144"
-        run: npm run gulp ${{ matrix.gulp_target }}
+        run: npm run gulp ${{ matrix.gulp_target }}-ci
 
       - name: Package server tarball
         run: |
