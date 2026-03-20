@@ -67,7 +67,7 @@ export class MainThreadTreeViews extends Disposable implements MainThreadTreeVie
 				this.registerListeners(treeViewId, viewer, disposables);
 				this._proxy.$setVisible(treeViewId, viewer.visible);
 			} else {
-				this.notificationService.error('No view is registered with id: ' + treeViewId);
+				this.logService.warn('No view is registered with id: ' + treeViewId);
 			}
 		});
 	}

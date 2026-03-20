@@ -2,7 +2,7 @@
 	"nameShort": "ephcode",
 	"nameLong": "ephcode",
 	"applicationName": "ephcode",
-	"commit": "9d33763464ba0ac52c8e6799a2e5304c26bd7083",
+	"commit": "9ec1c33d83cea9d528df11bbbff50a258e86f147",
 	"quality": "stable",
 	"dataFolderName": ".ephcode",
 	"win32MutexName": "ephcode",

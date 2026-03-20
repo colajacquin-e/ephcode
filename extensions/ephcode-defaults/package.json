@@ -67,9 +67,6 @@
 			"terminal.integrated.hideOnStartup": "always",
 			"terminal.integrated.suggest.enabled": true,
 			"window.commandCenter": false,
-			"window.nativeTabs": false,
-			"window.titleBarStyle": "custom",
-			"window.customTitleBarVisibility": "never",
 			"workbench.editor.closeEmptyGroups": true,
 			"workbench.editor.showIcons": true,
 			"workbench.editor.editorActionsLocation": "default",
@@ -93,8 +90,6 @@
 				"scminput": false
 			},
 			"workbench.secondarySideBar.defaultOpen": false,
-			"remote.SSH.configFile": "~/.ssh/config",
-			"remote.SSH.serverDownloadUrlTemplate": "https://update.code.visualstudio.com/commit:${commit}/server-${os}-${arch}/stable",
 			"git.autofetch": true,
 			"git.openRepositoryInParentFolders": "never",
 			"files.exclude": {
