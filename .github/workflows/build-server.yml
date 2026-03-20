@@ -86,12 +86,14 @@ jobs:
           TAG="server-${COMMIT}"
           ASSET="ephcode-server-linux-${{ matrix.arch }}-${COMMIT}.tar.gz"
 
-          # Create release if it doesn't exist
-          gh release view "$TAG" 2>/dev/null || \
-            gh release create "$TAG" \
-              --title "Server build ${COMMIT:0:8}" \
-              --notes "Automated server build for commit ${COMMIT}" \
-              --prerelease
+          # Try to create release (only one job will succeed, the other gets a 422)
+          gh release create "$TAG" \
+            --title "Server build ${COMMIT:0:8}" \
+            --notes "Automated server build for commit ${COMMIT}" \
+            --prerelease 2>/dev/null || true
 
-          # Upload asset
-          gh release upload "$TAG" "$ASSET" --clobber
+          # Upload asset (retry a few times in case release is still being created)
+          for i in 1 2 3; do
+            gh release upload "$TAG" "$ASSET" --clobber && break
+            sleep 5
+          done
