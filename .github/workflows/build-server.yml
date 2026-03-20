@@ -38,7 +38,6 @@ jobs:
 
       - name: Add swap space
         run: |
-          # Extend existing swap with an additional swapfile
           sudo swapoff /swapfile 2>/dev/null || true
           sudo rm -f /swapfile
           sudo fallocate -l 12G /swapfile
@@ -59,30 +58,12 @@ jobs:
           VSCODE_ARCH: ${{ matrix.arch }}
         run: npm ci
 
-      - name: Compile sources (without mangling)
-        env:
-          NODE_OPTIONS: "--max-old-space-size=6144"
-        run: npm run gulp compile-build-without-mangling
-
-      - name: Compile extensions
-        env:
-          NODE_OPTIONS: "--max-old-space-size=6144"
-        run: |
-          npm run gulp clean-extensions-build
-          npm run gulp compile-non-native-extensions-build
-          npm run gulp compile-extension-media-build
-
-      - name: Bundle server
-        env:
-          NODE_OPTIONS: "--max-old-space-size=6144"
-        run: npm run gulp bundle-vscode-reh
-
-      - name: Package server
+      - name: Build server
         env:
           npm_config_arch: ${{ matrix.npm_arch }}
           VSCODE_ARCH: ${{ matrix.arch }}
           NODE_OPTIONS: "--max-old-space-size=6144"
-        run: npm run gulp ${{ matrix.gulp_target }}-ci
+        run: npm run gulp ${{ matrix.gulp_target }}
 
       - name: Package server tarball
         run: |
