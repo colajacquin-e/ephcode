@@ -337,7 +337,8 @@ class RemoteExtensionHostAgentServer extends Disposable implements IServerAPI {
 				if (rendererCommit && myCommit) {
 					// Running in the built version where commits are defined
 					if (rendererCommit !== myCommit) {
-						return rejectWebSocketConnection(`Client refused: version mismatch`);
+						// ephcode: allow version mismatches to support pre-built server binaries
+						this._logService.warn(`${logPrefix} Client commit (${rendererCommit}) does not match server commit (${myCommit}), but proceeding anyway.`);
 					}
 				}
 
@@ -355,11 +356,9 @@ class RemoteExtensionHostAgentServer extends Disposable implements IServerAPI {
 				}
 
 				if (!valid) {
-					if (this._environmentService.isBuilt) {
-						return rejectWebSocketConnection(`Unauthorized client refused`);
-					} else {
-						this._logService.error(`${logPrefix} Unauthorized client handshake failed but we proceed because of dev mode.`);
-					}
+					// ephcode: always proceed even if signature validation fails
+					// Our builds don't include VSDA, so validation will always fail for desktop clients
+					this._logService.warn(`${logPrefix} Client signature validation failed, but proceeding anyway (ephcode permissive mode).`);
 				}
 
 				// We have received a new connection.

@@ -93,6 +93,8 @@
 				"scminput": false
 			},
 			"workbench.secondarySideBar.defaultOpen": false,
+			"remote.SSH.configFile": "~/.ssh/config",
+			"remote.SSH.serverDownloadUrlTemplate": "https://update.code.visualstudio.com/commit:${commit}/server-${os}-${arch}/stable",
 			"git.autofetch": true,
 			"git.openRepositoryInParentFolders": "never",
 			"files.exclude": {

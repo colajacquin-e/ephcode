@@ -2,6 +2,8 @@
 	"nameShort": "ephcode",
 	"nameLong": "ephcode",
 	"applicationName": "ephcode",
+	"commit": "9d33763464ba0ac52c8e6799a2e5304c26bd7083",
+	"quality": "stable",
 	"dataFolderName": ".ephcode",
 	"win32MutexName": "ephcode",
 	"licenseName": "MIT",
@@ -10,7 +12,7 @@
 	"serverGreeting": [],
 	"serverLicense": [],
 	"serverLicensePrompt": "",
-	"serverApplicationName": "ephcode-server",
+	"serverApplicationName": "code-server",
 	"serverDataFolderName": ".ephcode-server",
 	"tunnelApplicationName": "ephcode-tunnel",
 	"win32DirName": "ephcode",
@@ -31,6 +33,7 @@
 	"licenseFileName": "LICENSE.txt",
 	"reportIssueUrl": "https://github.com/microsoft/vscode/issues/new",
 	"nodejsRepository": "https://nodejs.org",
+	"serverDownloadUrlTemplate": "https://github.com/colajacquin-e/ephcode/releases/download/server-${commit}/ephcode-server-${os}-${arch}-${commit}.tar.gz",
 	"urlProtocol": "ephcode",
 	"webviewContentExternalBaseUrlTemplate": "https://{{uuid}}.vscode-cdn.net/insider/ef65ac1ba57f57f2a3961bfe94aa20481caca4c6/out/vs/workbench/contrib/webview/browser/pre/",
 	"extensionsGallery": {
@@ -110,6 +113,7 @@
 		"ms-python",
 		"eamodio",
 		"sirtori",
+		"jeanp413",
 		"mechatroner",
 		"rafamel",
 		"tintinweb",
@@ -119,6 +123,12 @@
 		"anthropic",
 		"microsoft"
 	],
+	"extensionEnabledApiProposals": {
+		"jeanp413.open-remote-ssh": [
+			"resolvers",
+			"contribViewsRemote"
+		]
+	},
 	"trustedExtensionAuthAccess": {
 		"github": [],
 		"github-enterprise": []

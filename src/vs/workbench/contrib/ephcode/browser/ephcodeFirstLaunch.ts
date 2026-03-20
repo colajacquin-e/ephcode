@@ -10,7 +10,6 @@ import { IHostService } from '../../../services/host/browser/host.js';
 import { IExtensionGalleryService, IExtensionInfo } from '../../../../platform/extensionManagement/common/extensionManagement.js';
 import { IWorkbenchExtensionManagementService } from '../../../services/extensionManagement/common/extensionManagement.js';
 import { CancellationToken } from '../../../../base/common/cancellation.js';
-import { INotificationService, Severity } from '../../../../platform/notification/common/notification.js';
 import { mainWindow } from '../../../../base/browser/window.js';
 
 const FIRST_LAUNCH_KEY = 'ephcode.firstLaunchComplete';
@@ -39,7 +38,6 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 		@IHostService private readonly hostService: IHostService,
 		@IExtensionGalleryService private readonly galleryService: IExtensionGalleryService,
 		@IWorkbenchExtensionManagementService private readonly extensionManagementService: IWorkbenchExtensionManagementService,
-		@INotificationService private readonly notificationService: INotificationService,
 	) {
 		super();
 		this.showFirstLaunchPrompt();
@@ -207,9 +205,9 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 					transition: background 0.2s, transform 0.1s;
 					font-family: 'Avenir Next', 'Avenir', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 					${primary
-		? 'background: #445a4d; color: #c5cbc8;'
-		: 'background: transparent; color: #6b7078; border: 1px solid #2a3b42;'
-	}
+						? 'background: #445a4d; color: #c5cbc8;'
+						: 'background: transparent; color: #6b7078; border: 1px solid #2a3b42;'
+					}
 				`;
 				btn.addEventListener('mouseenter', () => {
 					btn.style.background = primary ? '#5a6e5e' : '#2a3b4244';

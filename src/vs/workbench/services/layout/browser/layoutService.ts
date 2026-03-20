@@ -9,10 +9,6 @@ import { ILayoutService } from '../../../../platform/layout/browser/layoutServic
 import { Part } from '../../../browser/part.js';
 import { IDimension } from '../../../../base/browser/dom.js';
 import { Direction, IViewSize } from '../../../../base/browser/ui/grid/grid.js';
-import { isMacintosh, isNative, isWeb } from '../../../../base/common/platform.js';
-import { isAuxiliaryWindow } from '../../../../base/browser/window.js';
-import { CustomTitleBarVisibility, TitleBarSetting, getMenuBarVisibility, hasCustomTitlebar, hasNativeMenu, hasNativeTitlebar } from '../../../../platform/window/common/window.js';
-import { isFullscreen, isWCOEnabled } from '../../../../base/browser/browser.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { IDisposable } from '../../../../base/common/lifecycle.js';
 
@@ -363,85 +359,8 @@ export interface IWorkbenchLayoutService extends ILayoutService {
 	getVisibleNeighborPart(part: Parts, direction: Direction): Parts | undefined;
 }
 
-export function shouldShowCustomTitleBar(configurationService: IConfigurationService, window: Window, menuBarToggled?: boolean): boolean {
+export function shouldShowCustomTitleBar(_configurationService: IConfigurationService, _window: Window, _menuBarToggled?: boolean): boolean {
 	// ephcode: never show custom title bar — tabs act as the drag region
 	return false;
-
-	const inFullscreen = isFullscreen(window);
-	const nativeTitleBarEnabled = hasNativeTitlebar(configurationService);
-
-	if (!isWeb) {
-		const showCustomTitleBar = configurationService.getValue<CustomTitleBarVisibility>(TitleBarSetting.CUSTOM_TITLE_BAR_VISIBILITY);
-		if (showCustomTitleBar === CustomTitleBarVisibility.NEVER || showCustomTitleBar === CustomTitleBarVisibility.WINDOWED && inFullscreen) {
-			return false;
-		}
-	}
-
-	if (!isTitleBarEmpty(configurationService)) {
-		return true;
-	}
-
-	// Hide custom title bar when native title bar enabled and custom title bar is empty
-	if (nativeTitleBarEnabled && hasNativeMenu(configurationService)) {
-		return false;
-	}
-
-	// macOS desktop does not need a title bar when full screen
-	if (isMacintosh && isNative) {
-		return !inFullscreen;
-	}
-
-	// non-fullscreen native must show the title bar
-	if (isNative && !inFullscreen) {
-		return true;
-	}
-
-	// if WCO is visible, we have to show the title bar
-	if (isWCOEnabled() && !inFullscreen) {
-		return true;
-	}
-
-	// remaining behavior is based on menubar visibility
-	const menuBarVisibility = !isAuxiliaryWindow(window) ? getMenuBarVisibility(configurationService) : 'hidden';
-	switch (menuBarVisibility) {
-		case 'classic':
-			return !inFullscreen || !!menuBarToggled;
-		case 'compact':
-		case 'hidden':
-			return false;
-		case 'toggle':
-			return !!menuBarToggled;
-		case 'visible':
-			return true;
-		default:
-			return isWeb ? false : !inFullscreen || !!menuBarToggled;
-	}
 }
 
-function isTitleBarEmpty(configurationService: IConfigurationService): boolean {
-
-	// with the command center enabled, we should always show
-	if (configurationService.getValue<boolean>(LayoutSettings.COMMAND_CENTER)) {
-		return false;
-	}
-
-	// with the activity bar on top, we should always show
-	const activityBarPosition = configurationService.getValue<ActivityBarPosition>(LayoutSettings.ACTIVITY_BAR_LOCATION);
-	if (activityBarPosition === ActivityBarPosition.TOP || activityBarPosition === ActivityBarPosition.BOTTOM) {
-		return false;
-	}
-
-	// with the editor actions on top, we should always show
-	const editorActionsLocation = configurationService.getValue<EditorActionsLocation>(LayoutSettings.EDITOR_ACTIONS_LOCATION);
-	const editorTabsMode = configurationService.getValue<EditorTabsMode>(LayoutSettings.EDITOR_TABS_MODE);
-	if (editorActionsLocation === EditorActionsLocation.TITLEBAR || editorActionsLocation === EditorActionsLocation.DEFAULT && editorTabsMode === EditorTabsMode.NONE) {
-		return false;
-	}
-
-	// with the layout actions on top, we should always show
-	if (configurationService.getValue<boolean>(LayoutSettings.LAYOUT_ACTIONS)) {
-		return false;
-	}
-
-	return true;
-}
