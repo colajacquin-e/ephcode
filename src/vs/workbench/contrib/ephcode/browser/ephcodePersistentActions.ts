@@ -41,7 +41,6 @@ export class EphcodePersistentActionsContribution extends Disposable implements 
 		const watchGroup = () => {
 			const group = this.editorGroupsService.activeGroup;
 			if (group) {
-				this._register(group.onDidOpenEditorFail(() => checkAndUpdate()));
 				this._register(group.onDidCloseEditor(() => {
 					checkAndUpdate();
 					this.closeEmptyGroups();
@@ -73,7 +72,6 @@ export class EphcodePersistentActionsContribution extends Disposable implements 
 	}
 
 	private updateClaudeButton(): void {
-		const document = mainWindow.document;
 		const group = this.editorGroupsService.activeGroup;
 		const hasEditors = group && group.count > 0;
 

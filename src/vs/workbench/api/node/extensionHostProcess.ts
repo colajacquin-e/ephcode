@@ -8,7 +8,7 @@ import * as nativeWatchdog from '@vscode/native-watchdog';
 import * as net from 'net';
 import { ProcessTimeRunOnceScheduler } from '../../../base/common/async.js';
 import { VSBuffer } from '../../../base/common/buffer.js';
-import { PendingMigrationError, isCancellationError, isSigPipeError, onUnexpectedError, onUnexpectedExternalError } from '../../../base/common/errors.js';
+import { isCancellationError, isSigPipeError, onUnexpectedError } from '../../../base/common/errors.js';
 import { Event } from '../../../base/common/event.js';
 import * as performance from '../../../base/common/performance.js';
 import { IURITransformer } from '../../../base/common/uriIpc.js';
@@ -139,14 +139,15 @@ function patchProcess(allowExit: boolean) {
 
 // NodeJS since v21 defines navigator as a global object. This will likely surprise many extensions and potentially break them
 // because `navigator` has historically often been used to check if running in a browser (vs running inside NodeJS)
-if (!args.supportGlobalNavigator) {
-	Object.defineProperty(globalThis, 'navigator', {
-		get: () => {
-			onUnexpectedExternalError(new PendingMigrationError('navigator is now a global in nodejs, please see https://aka.ms/vscode-extensions/navigator for additional info on this error.'));
-			return undefined;
-		}
-	});
-}
+// ephcode: disabled navigator trap to allow open-remote-ssh and other extensions that use navigator
+// if (!args.supportGlobalNavigator) {
+// 	Object.defineProperty(globalThis, 'navigator', {
+// 		get: () => {
+// 			onUnexpectedExternalError(new PendingMigrationError('navigator is now a global in nodejs, please see https://aka.ms/vscode-extensions/navigator for additional info on this error.'));
+// 			return undefined;
+// 		}
+// 	});
+// }
 
 
 interface IRendererConnection {

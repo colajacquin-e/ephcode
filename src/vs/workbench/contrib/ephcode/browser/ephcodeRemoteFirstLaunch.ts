@@ -11,10 +11,11 @@ import { IExtensionGalleryService, IExtensionInfo } from '../../../../platform/e
 import { IWorkbenchExtensionManagementService } from '../../../services/extensionManagement/common/extensionManagement.js';
 import { CancellationToken } from '../../../../base/common/cancellation.js';
 import { mainWindow } from '../../../../base/browser/window.js';
+import { IWorkbenchEnvironmentService } from '../../../services/environment/common/environmentService.js';
 
-const FIRST_LAUNCH_KEY = 'ephcode.firstLaunchComplete';
+const REMOTE_FIRST_LAUNCH_KEY = 'ephcode.remoteFirstLaunchComplete';
 
-const EPHCODE_EXTENSIONS: { id: string; name: string }[] = [
+const EPHCODE_REMOTE_EXTENSIONS: { id: string; name: string }[] = [
 	{ id: 'anthropic.claude-code', name: 'Claude Code' },
 	{ id: 'llvm-vs-code-extensions.vscode-clangd', name: 'clangd (C/C++)' },
 	{ id: 'ms-vscode.cmake-tools', name: 'CMake Tools' },
@@ -29,41 +30,42 @@ const EPHCODE_EXTENSIONS: { id: string; name: string }[] = [
 	{ id: 'Percy.vscode-numpy-viewer', name: 'vscode-numpy-viewer' },
 ];
 
-export class EphcodeFirstLaunchContribution extends Disposable implements IWorkbenchContribution {
+export class EphcodeRemoteFirstLaunchContribution extends Disposable implements IWorkbenchContribution {
 
-	static readonly ID = 'workbench.contrib.ephcodeFirstLaunch';
+	static readonly ID = 'workbench.contrib.ephcodeRemoteFirstLaunch';
 
 	constructor(
 		@IStorageService private readonly storageService: IStorageService,
 		@IHostService private readonly hostService: IHostService,
 		@IExtensionGalleryService private readonly galleryService: IExtensionGalleryService,
 		@IWorkbenchExtensionManagementService private readonly extensionManagementService: IWorkbenchExtensionManagementService,
+		@IWorkbenchEnvironmentService private readonly environmentService: IWorkbenchEnvironmentService,
 	) {
 		super();
-		this.showFirstLaunchPrompt();
+		this.checkRemoteFirstLaunch();
 	}
 
-	private async showFirstLaunchPrompt(): Promise<void> {
-		const isComplete = this.storageService.getBoolean(FIRST_LAUNCH_KEY, StorageScope.APPLICATION, false);
+	private async checkRemoteFirstLaunch(): Promise<void> {
+		// Only trigger on remote connections
+		if (!this.environmentService.remoteAuthority) {
+			return;
+		}
+
+		const isComplete = this.storageService.getBoolean(REMOTE_FIRST_LAUNCH_KEY, StorageScope.APPLICATION, false);
 		if (isComplete) {
 			return;
 		}
 
-		const result = await this.showOverlay();
-
-		if (result === 'exit') {
-			this.hostService.close();
-			return;
-		}
+		const result = await this.showRemoteOverlay();
 
 		if (result === 'install') {
-			await this.installExtensions();
+			await this.installRemoteExtensions();
 		}
 
-		this.storageService.store(FIRST_LAUNCH_KEY, true, StorageScope.APPLICATION, StorageTarget.USER);
+		this.storageService.store(REMOTE_FIRST_LAUNCH_KEY, true, StorageScope.APPLICATION, StorageTarget.USER);
 	}
 
-	private showOverlay(): Promise<'install' | 'skip' | 'exit'> {
+	private showRemoteOverlay(): Promise<'install' | 'skip'> {
 		return new Promise(resolve => {
 			const document = mainWindow.document;
 
@@ -86,101 +88,46 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 			// Title
 			const title = document.createElement('h1');
 			title.style.cssText = `
-				font-size: 14px; font-weight: 400; margin: 0 0 12px 0;
-				color: #6b7078;
-			`;
-			title.appendChild(document.createTextNode('Welcome to '));
-
-			const brand = document.createElement('span');
-			brand.style.cssText = `
 				font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Menlo', monospace;
-				font-size: 32px; font-weight: 700; letter-spacing: 8px;
-				display: block; margin-top: 8px;
+				font-size: 28px; font-weight: 700; letter-spacing: 6px;
+				color: #c5cbc8; margin: 0 0 8px 0;
 			`;
+			title.textContent = 'EPHCODE';
 
-			// Create individual letter spans for the scramble animation
-			const TARGET = 'EPHCODE';
-			const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&';
-			const letterSpans: HTMLSpanElement[] = [];
-			for (let i = 0; i < TARGET.length; i++) {
-				const span = document.createElement('span');
-				span.textContent = CHARS[Math.floor(Math.random() * CHARS.length)];
-				span.style.cssText = 'transition: color 0.1s; color: #c5cbc8;';
-				brand.appendChild(span);
-				letterSpans.push(span);
-			}
-
-			// Rainbow color palette
-			const rainbowColors = [
-				'#e05534', '#d4782e', '#b8520a', '#c4966a',
-				'#779e7f', '#5a9a8a', '#5a8a9a', '#8a6a9a',
-				'#9aaa9e', '#8eb89a', '#e8734f', '#6aaa9a',
-			];
-
-			// Scramble animation: random chars + rainbow for ~5s, then settle
-			const TOTAL_DURATION = 5000;
-			const TICK_MS = 50;
-			const startTime = Date.now();
-			const settled = new Array(TARGET.length).fill(false);
-
-			const scrambleInterval = mainWindow.setInterval(() => {
-				const elapsed = Date.now() - startTime;
-				const progress = Math.min(elapsed / TOTAL_DURATION, 1);
-
-				for (let i = 0; i < TARGET.length; i++) {
-					if (settled[i]) {
-						continue;
-					}
-
-					// Each letter settles at a staggered time
-					const settleThreshold = 0.3 + (i / TARGET.length) * 0.6;
-					if (progress >= settleThreshold) {
-						settled[i] = true;
-						letterSpans[i].textContent = TARGET[i];
-						letterSpans[i].style.color = '#c5cbc8';
-						letterSpans[i].style.textShadow = '0 0 20px #445a4d44';
-						continue;
-					}
-
-					// Random character
-					letterSpans[i].textContent = CHARS[Math.floor(Math.random() * CHARS.length)];
-
-					// Rainbow color cycling
-					const colorIdx = Math.floor((elapsed / 80 + i * 3) % rainbowColors.length);
-					letterSpans[i].style.color = rainbowColors[colorIdx];
-				}
-
-				// All settled — done
-				if (settled.every(s => s)) {
-					mainWindow.clearInterval(scrambleInterval);
-				}
-			}, TICK_MS);
-
-			title.appendChild(brand);
+			// Remote badge
+			const badge = document.createElement('div');
+			badge.style.cssText = `
+				display: inline-block; padding: 4px 12px; border-radius: 4px;
+				background: #5a8a9a22; border: 1px solid #5a8a9a44;
+				font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+				font-size: 11px; color: #5a8a9a; letter-spacing: 2px;
+				margin: 0 0 24px 0; text-transform: uppercase;
+			`;
+			badge.textContent = 'Remote Session';
 
 			// Subtitle
 			const subtitle = document.createElement('p');
 			subtitle.style.cssText = `
-				font-size: 14px; color: #6b7078; margin: 0 0 32px 0;
-				line-height: 1.5;
+				font-size: 14px; color: #9a9ea4; margin: 0 0 12px 0;
+				line-height: 1.6;
 			`;
+			subtitle.textContent = 'You just connected to a remote machine — nice.';
 
-			const ephgoatSpan = document.createElement('span');
-			ephgoatSpan.textContent = 'ephgoat';
-			ephgoatSpan.style.cssText = 'color: #779e7f; cursor: default; transition: color 0.2s;';
-
-			subtitle.appendChild(document.createTextNode('If you aspire to code at the legendary level of '));
-			subtitle.appendChild(ephgoatSpan);
-			subtitle.appendChild(document.createTextNode(' himself, ephcode will bless your environment with these sacred extensions:'));
+			const subtitle2 = document.createElement('p');
+			subtitle2.style.cssText = `
+				font-size: 14px; color: #6b7078; margin: 0 0 28px 0;
+				line-height: 1.6;
+			`;
+			subtitle2.textContent = 'Your remote environment is missing the ephcode extensions. Install them here so you get the same setup on every machine you touch.';
 
 			// Extension list
 			const list = document.createElement('div');
 			list.style.cssText = `
 				background: #1b1d20; border-radius: 8px; padding: 16px 20px;
-				margin: 0 0 32px 0; max-height: 220px; overflow-y: auto;
+				margin: 0 0 32px 0; max-height: 200px; overflow-y: auto;
 				border: 1px solid #2a3b4244;
 			`;
-			for (const ext of EPHCODE_EXTENSIONS) {
+			for (const ext of EPHCODE_REMOTE_EXTENSIONS) {
 				const item = document.createElement('div');
 				item.style.cssText = `
 					font-size: 13px; color: #9a9ea4; padding: 3px 0;
@@ -190,7 +137,7 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 				list.appendChild(item);
 			}
 
-			// Buttons container
+			// Buttons
 			const buttons = document.createElement('div');
 			buttons.style.cssText = `
 				display: flex; flex-direction: column; gap: 10px;
@@ -224,42 +171,8 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 				return btn;
 			};
 
-			const installBtn = makeButton('Enable ephmode', true);
-			const skipBtn = makeButton('My config > his config', false);
-			const exitBtn = makeButton('I\'m lame, exit', false);
-
-			// Style skip button with orange accent
-			skipBtn.style.background = 'transparent';
-			skipBtn.style.color = '#b8520a';
-			skipBtn.style.border = '1px solid #b8520a44';
-			skipBtn.addEventListener('mouseenter', () => {
-				skipBtn.style.background = '#b8520a22';
-			});
-			skipBtn.addEventListener('mouseleave', () => {
-				skipBtn.style.background = 'transparent';
-			});
-
-			// Hidden button - revealed when "ephgoat" is clicked
-			skipBtn.style.display = 'none';
-
-			// Easter egg: click "ephgoat" to reveal skip button
-			ephgoatSpan.addEventListener('mouseenter', () => {
-				ephgoatSpan.style.color = '#b8520a';
-				ephgoatSpan.style.cursor = 'pointer';
-			});
-			ephgoatSpan.addEventListener('mouseleave', () => {
-				ephgoatSpan.style.color = '#779e7f';
-			});
-			ephgoatSpan.addEventListener('click', () => {
-				if (skipBtn.style.display === 'none') {
-					skipBtn.style.display = 'block';
-					skipBtn.style.opacity = '0';
-					mainWindow.requestAnimationFrame(() => {
-						skipBtn.style.transition = 'opacity 0.3s';
-						skipBtn.style.opacity = '1';
-					});
-				}
-			});
+			const installBtn = makeButton('Enable ephmode on remote', true);
+			const skipBtn = makeButton('Skip for now', false);
 
 			const cleanup = () => {
 				overlay.style.transition = 'opacity 0.2s';
@@ -269,14 +182,14 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 
 			installBtn.addEventListener('click', () => { cleanup(); resolve('install'); });
 			skipBtn.addEventListener('click', () => { cleanup(); resolve('skip'); });
-			exitBtn.addEventListener('click', () => { cleanup(); resolve('exit'); });
 
 			buttons.appendChild(installBtn);
 			buttons.appendChild(skipBtn);
-			buttons.appendChild(exitBtn);
 
 			card.appendChild(title);
+			card.appendChild(badge);
 			card.appendChild(subtitle);
+			card.appendChild(subtitle2);
 			card.appendChild(list);
 			card.appendChild(buttons);
 			overlay.appendChild(card);
@@ -284,10 +197,9 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 		});
 	}
 
-	private async installExtensions(): Promise<void> {
+	private async installRemoteExtensions(): Promise<void> {
 		const document = mainWindow.document;
 
-		// Create blocking overlay
 		const overlay = document.createElement('div');
 		overlay.style.cssText = `
 			position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -308,15 +220,25 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 		title.style.cssText = `
 			font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Menlo', monospace;
 			font-size: 24px; font-weight: 700; letter-spacing: 6px;
-			color: #c5cbc8; margin: 0 0 24px 0;
+			color: #c5cbc8; margin: 0 0 8px 0;
 		`;
 		title.textContent = 'EPHCODE';
+
+		const badge = document.createElement('div');
+		badge.style.cssText = `
+			display: inline-block; padding: 4px 12px; border-radius: 4px;
+			background: #5a8a9a22; border: 1px solid #5a8a9a44;
+			font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+			font-size: 11px; color: #5a8a9a; letter-spacing: 2px;
+			margin: 0 0 24px 0; text-transform: uppercase;
+		`;
+		badge.textContent = 'Remote Session';
 
 		const statusText = document.createElement('p');
 		statusText.style.cssText = `
 			font-size: 14px; color: #9a9ea4; margin: 0 0 24px 0;
 		`;
-		statusText.textContent = 'Preparing your environment...';
+		statusText.textContent = 'Setting up your remote environment...';
 
 		// Progress bar
 		const progressTrack = document.createElement('div');
@@ -327,7 +249,7 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 		`;
 		const progressFill = document.createElement('div');
 		progressFill.style.cssText = `
-			background: linear-gradient(90deg, #445a4d, #779e7f);
+			background: linear-gradient(90deg, #445a4d, #5a8a9a);
 			height: 100%; width: 0%; border-radius: 4px;
 			transition: width 0.3s ease;
 		`;
@@ -343,7 +265,6 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 			font-size: 12px; color: #6b7078;
 		`;
 
-		// "Let's go!" button (hidden initially)
 		const goBtn = document.createElement('button');
 		goBtn.textContent = 'Let\'s go!';
 		goBtn.style.cssText = `
@@ -357,6 +278,7 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 		goBtn.addEventListener('mouseleave', () => { goBtn.style.background = '#445a4d'; });
 
 		card.appendChild(title);
+		card.appendChild(badge);
 		card.appendChild(statusText);
 		card.appendChild(progressTrack);
 		card.appendChild(logArea);
@@ -374,11 +296,11 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 
 		try {
 			addLog('Fetching extension list from marketplace...');
-			const extensionInfos: IExtensionInfo[] = EPHCODE_EXTENSIONS.map(ext => ({ id: ext.id }));
+			const extensionInfos: IExtensionInfo[] = EPHCODE_REMOTE_EXTENSIONS.map(ext => ({ id: ext.id }));
 			const unsortedExtensions = await this.galleryService.getExtensions(extensionInfos, CancellationToken.None);
 			const galleryExtensions = [...unsortedExtensions].sort((a, b) => {
-				const nameA = EPHCODE_EXTENSIONS.find(e => e.id.toLowerCase() === a.identifier.id.toLowerCase())?.name || a.identifier.id;
-				const nameB = EPHCODE_EXTENSIONS.find(e => e.id.toLowerCase() === b.identifier.id.toLowerCase())?.name || b.identifier.id;
+				const nameA = EPHCODE_REMOTE_EXTENSIONS.find(e => e.id.toLowerCase() === a.identifier.id.toLowerCase())?.name || a.identifier.id;
+				const nameB = EPHCODE_REMOTE_EXTENSIONS.find(e => e.id.toLowerCase() === b.identifier.id.toLowerCase())?.name || b.identifier.id;
 				return nameA.localeCompare(nameB);
 			});
 
@@ -390,26 +312,27 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 				statusText.textContent = 'Could not reach the marketplace.';
 				addLog('Error: no extensions found.', '#e05534');
 				goBtn.style.display = 'block';
-				await new Promise<void>(resolve => goBtn.addEventListener('click', () => resolve()));
+				await new Promise<void>(r => goBtn.addEventListener('click', () => r()));
 				overlay.remove();
 				return;
 			}
 
-			addLog(`Found ${total} extensions. Installing...`);
+			addLog(`Found ${total} extensions. Installing on remote...`);
 
 			for (const extension of galleryExtensions) {
-				const extName = EPHCODE_EXTENSIONS.find(e => e.id.toLowerCase() === extension.identifier.id.toLowerCase())?.name || extension.identifier.id;
+				const extName = EPHCODE_REMOTE_EXTENSIONS.find(e => e.id.toLowerCase() === extension.identifier.id.toLowerCase())?.name || extension.identifier.id;
 				try {
 					statusText.textContent = `Installing ${extName}...`;
 					await this.extensionManagementService.installFromGallery(extension);
 					installed++;
 					progressFill.style.width = `${(installed / total) * 100}%`;
-					addLog(`✓ ${extName}`, '#779e7f');
+					// allow-any-unicode-next-line
+					addLog(`✓ ${extName}`, '#5a8a9a');
 				} catch (err) {
 					failed++;
 					// allow-any-unicode-next-line
 					addLog(`✗ ${extName}`, '#e05534');
-					console.error(`[ephcode] Failed to install ${extension.identifier.id}:`, err);
+					console.error(`[ephcode] Failed to install ${extension.identifier.id} on remote:`, err);
 				}
 			}
 
@@ -420,6 +343,7 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 				const pylance = localExtensions.find(e => e.identifier.id.toLowerCase() === 'ms-python.vscode-pylance');
 				if (pylance) {
 					await this.extensionManagementService.uninstall(pylance);
+					// allow-any-unicode-next-line
 					addLog('✓ Removed Pylance (not supported on forks)', '#6b7078');
 				}
 			} catch {
@@ -427,34 +351,32 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 			}
 
 			progressFill.style.width = '100%';
-			progressFill.style.background = 'linear-gradient(90deg, #445a4d, #779e7f)';
 
 			if (failed > 0) {
 				statusText.textContent = `Done. ${installed} installed, ${failed} failed.`;
 			} else {
-				statusText.textContent = 'ephmode activated. You are now coding like ephgoat.';
-				statusText.style.color = '#779e7f';
+				statusText.textContent = 'ephmode activated';
+				statusText.style.color = '#5a8a9a';
 			}
 
 			goBtn.style.display = 'block';
 			goBtn.textContent = 'Let\'s go!';
 
-			await new Promise<void>(resolve => goBtn.addEventListener('click', () => resolve()));
+			await new Promise<void>(r => goBtn.addEventListener('click', () => r()));
 
 			overlay.style.transition = 'opacity 0.3s';
 			overlay.style.opacity = '0';
 			await new Promise(r => setTimeout(r, 300));
 			overlay.remove();
 
-			// Reload to apply all extension changes
 			this.hostService.reload();
 		} catch (err) {
-			console.error('[ephcode] Extension install error:', err);
+			console.error('[ephcode] Remote extension install error:', err);
 			statusText.textContent = 'Something went wrong.';
 			addLog(`Error: ${err}`, '#e05534');
 			goBtn.style.display = 'block';
 			goBtn.textContent = 'Continue anyway';
-			await new Promise<void>(resolve => goBtn.addEventListener('click', () => resolve()));
+			await new Promise<void>(r => goBtn.addEventListener('click', () => r()));
 			overlay.remove();
 		}
 	}

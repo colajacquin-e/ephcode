@@ -6,6 +6,8 @@
 import { WorkbenchPhase, registerWorkbenchContribution2 } from '../../../common/contributions.js';
 import { EphcodeFirstLaunchContribution } from './ephcodeFirstLaunch.js';
 import { EphcodePersistentActionsContribution } from './ephcodePersistentActions.js';
+import { EphcodeRemoteFirstLaunchContribution } from './ephcodeRemoteFirstLaunch.js';
 
 registerWorkbenchContribution2(EphcodeFirstLaunchContribution.ID, EphcodeFirstLaunchContribution, WorkbenchPhase.AfterRestored);
 registerWorkbenchContribution2(EphcodePersistentActionsContribution.ID, EphcodePersistentActionsContribution, WorkbenchPhase.AfterRestored);
+registerWorkbenchContribution2(EphcodeRemoteFirstLaunchContribution.ID, EphcodeRemoteFirstLaunchContribution, WorkbenchPhase.AfterRestored);
