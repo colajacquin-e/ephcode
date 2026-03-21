@@ -34,7 +34,6 @@ import {
 	ExtensionSignatureVerificationCode,
 	computeSize,
 	IAllowedExtensionsService,
-	VerifyExtensionSignatureConfigKey,
 	shouldRequireRepositorySignatureFor,
 } from '../common/extensionManagement.js';
 import { areSameExtensions, computeTargetPlatform, ExtensionKey, getGalleryExtensionId, groupByExtension } from '../common/extensionManagementUtil.js';
@@ -54,7 +53,6 @@ import { IProductService } from '../../product/common/productService.js';
 import { ITelemetryService } from '../../telemetry/common/telemetry.js';
 import { IUriIdentityService } from '../../uriIdentity/common/uriIdentity.js';
 import { IUserDataProfilesService } from '../../userDataProfile/common/userDataProfile.js';
-import { IConfigurationService } from '../../configuration/common/configuration.js';
 import { IExtensionGalleryManifestService } from '../common/extensionGalleryManifest.js';
 
 export const INativeServerExtensionManagementService = refineServiceDecorator<IExtensionManagementService, INativeServerExtensionManagementService>(IExtensionManagementService);
@@ -87,7 +85,6 @@ export class ExtensionManagementService extends AbstractExtensionManagementServi
 		@IDownloadService private downloadService: IDownloadService,
 		@IInstantiationService private readonly instantiationService: IInstantiationService,
 		@IFileService private readonly fileService: IFileService,
-		@IConfigurationService private readonly configurationService: IConfigurationService,
 		@IExtensionGalleryManifestService protected readonly extensionGalleryManifestService: IExtensionGalleryManifestService,
 		@IProductService productService: IProductService,
 		@IAllowedExtensionsService allowedExtensionsService: IAllowedExtensionsService,
