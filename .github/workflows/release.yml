@@ -20,6 +20,8 @@ permissions:
 
 env:
   NODE_OPTIONS: "--max-old-space-size=8192"
+  # @vscode/ripgrep downloads from GitHub releases — needs auth to avoid 403 rate limits
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   # ───────────────────────────────────────────────────────────────────────────
@@ -66,6 +68,19 @@ jobs:
         if: matrix.arch == 'arm64'
         run: |
           sudo dpkg --add-architecture arm64
+          # GitHub runners use Azure mirrors that only serve amd64.
+          # Add the official ports mirror for arm64 packages.
+          . /etc/os-release
+          cat <<EOF | sudo tee /etc/apt/sources.list.d/arm64-ports.list
+          deb [arch=arm64] http://ports.ubuntu.com/ ${VERSION_CODENAME} main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ ${VERSION_CODENAME}-updates main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ ${VERSION_CODENAME}-security main restricted universe multiverse
+          EOF
+          # Pin the default sources to amd64 only so they don't conflict
+          if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
+            sudo sed -i '/^Architectures:/d' /etc/apt/sources.list.d/ubuntu.sources
+            sudo sed -i '/^URIs:/i Architectures: amd64' /etc/apt/sources.list.d/ubuntu.sources
+          fi
           sudo apt-get update
           sudo apt-get install -y \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
@@ -327,6 +342,19 @@ jobs:
         if: matrix.arch == 'arm64'
         run: |
           sudo dpkg --add-architecture arm64
+          # GitHub runners use Azure mirrors that only serve amd64.
+          # Add the official ports mirror for arm64 packages.
+          . /etc/os-release
+          cat <<EOF | sudo tee /etc/apt/sources.list.d/arm64-ports.list
+          deb [arch=arm64] http://ports.ubuntu.com/ ${VERSION_CODENAME} main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ ${VERSION_CODENAME}-updates main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ ${VERSION_CODENAME}-security main restricted universe multiverse
+          EOF
+          # Pin the default sources to amd64 only so they don't conflict
+          if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
+            sudo sed -i '/^Architectures:/d' /etc/apt/sources.list.d/ubuntu.sources
+            sudo sed -i '/^URIs:/i Architectures: amd64' /etc/apt/sources.list.d/ubuntu.sources
+          fi
           sudo apt-get update
           sudo apt-get install -y \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
