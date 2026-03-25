@@ -1,0 +1,406 @@
+name: Release
+
+# Triggers on version tags pushed to main (e.g. git tag v1.2.3 && git push --tags).
+#
+# To test without creating a real release, use "Run workflow" from the GitHub
+# Actions UI. It will build everything and upload artifacts but skip the release.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version label for artifacts (e.g. v1.0.0-test)'
+        required: false
+        default: 'test'
+
+permissions:
+  contents: write
+
+env:
+  NODE_OPTIONS: "--max-old-space-size=8192"
+
+jobs:
+  # ───────────────────────────────────────────────────────────────────────────
+  # Linux — x64 and arm64 (cross-compiled on x64)
+  # ───────────────────────────────────────────────────────────────────────────
+  build-linux:
+    name: Linux ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            npm_arch: x64
+          - arch: arm64
+            npm_arch: arm64
+            cross_cc: aarch64-linux-gnu-gcc
+            cross_cxx: aarch64-linux-gnu-g++
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Add swap space
+        run: |
+          sudo swapoff /swapfile 2>/dev/null || true
+          sudo rm -f /swapfile
+          sudo fallocate -l 12G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential pkg-config python3 \
+            libx11-dev libxkbfile-dev libsecret-1-dev libkrb5-dev \
+            fakeroot rpm
+
+      - name: Install arm64 cross-compilation toolchain
+        if: matrix.arch == 'arm64'
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+            libx11-dev:arm64 libxkbfile-dev:arm64 \
+            libsecret-1-dev:arm64 libkrb5-dev:arm64
+
+      - name: Install dependencies
+        env:
+          npm_config_arch: ${{ matrix.npm_arch }}
+          VSCODE_ARCH: ${{ matrix.arch }}
+          CC: ${{ matrix.cross_cc }}
+          CXX: ${{ matrix.cross_cxx }}
+        run: npm ci
+
+      - name: Build
+        env:
+          npm_config_arch: ${{ matrix.npm_arch }}
+          VSCODE_ARCH: ${{ matrix.arch }}
+          CC: ${{ matrix.cross_cc }}
+          CXX: ${{ matrix.cross_cxx }}
+        run: npm run gulp vscode-linux-${{ matrix.arch }}
+
+      - name: Build .deb
+        env:
+          npm_config_arch: ${{ matrix.npm_arch }}
+          VSCODE_ARCH: ${{ matrix.arch }}
+        run: |
+          npm run gulp vscode-linux-${{ matrix.arch }}-prepare-deb
+          npm run gulp vscode-linux-${{ matrix.arch }}-build-deb
+
+      - name: Build .rpm
+        env:
+          npm_config_arch: ${{ matrix.npm_arch }}
+          VSCODE_ARCH: ${{ matrix.arch }}
+        run: |
+          npm run gulp vscode-linux-${{ matrix.arch }}-prepare-rpm
+          npm run gulp vscode-linux-${{ matrix.arch }}-build-rpm
+
+      - name: Package .tar.gz
+        run: |
+          TAG="${{ inputs.version || github.ref_name }}"
+          cd ../VSCode-linux-${{ matrix.arch }}
+          tar czf "$GITHUB_WORKSPACE/ephcode-linux-${{ matrix.arch }}-${TAG}.tar.gz" .
+
+      - name: Collect .deb and .rpm
+        run: |
+          TAG="${{ inputs.version || github.ref_name }}"
+          find .build/linux -name "*.deb" | head -1 | xargs -I{} cp {} "ephcode-linux-${{ matrix.arch }}-${TAG}.deb" || true
+          find .build/linux -name "*.rpm" | head -1 | xargs -I{} cp {} "ephcode-linux-${{ matrix.arch }}-${TAG}.rpm" || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}
+          path: |
+            ephcode-linux-${{ matrix.arch }}-*.tar.gz
+            ephcode-linux-${{ matrix.arch }}-*.deb
+            ephcode-linux-${{ matrix.arch }}-*.rpm
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Windows — x64 and arm64
+  # ───────────────────────────────────────────────────────────────────────────
+  build-windows:
+    name: Windows ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            npm_arch: x64
+          - arch: arm64
+            npm_arch: arm64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies
+        env:
+          npm_config_arch: ${{ matrix.npm_arch }}
+          VSCODE_ARCH: ${{ matrix.arch }}
+        run: npm ci
+
+      - name: Build
+        env:
+          npm_config_arch: ${{ matrix.npm_arch }}
+          VSCODE_ARCH: ${{ matrix.arch }}
+        run: npm run gulp vscode-win32-${{ matrix.arch }}
+
+      - name: Build system installer
+        env:
+          npm_config_arch: ${{ matrix.npm_arch }}
+          VSCODE_ARCH: ${{ matrix.arch }}
+        run: npm run gulp vscode-win32-${{ matrix.arch }}-system-setup
+
+      - name: Build user installer
+        env:
+          npm_config_arch: ${{ matrix.npm_arch }}
+          VSCODE_ARCH: ${{ matrix.arch }}
+        run: npm run gulp vscode-win32-${{ matrix.arch }}-user-setup
+
+      # ── Windows code signing (SignPath Foundation — free for open source) ──
+      # To enable:
+      #   1. Apply at https://signpath.org (free for public repos)
+      #   2. Add SIGNPATH_API_TOKEN to repository secrets
+      #   3. Uncomment the step below and fill in your organization/project slugs
+      #
+      # - name: Sign installers
+      #   uses: signpath/github-action-submit-signing-request@v1
+      #   with:
+      #     api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+      #     organization-id: '<your-org-id>'
+      #     project-slug: 'ephcode'
+      #     signing-policy-slug: 'release-signing'
+      #     github-artifact-id: ${{ steps.upload-unsigned.outputs.artifact-id }}
+      #     wait-for-completion: true
+      #     output-artifact-directory: signed/
+
+      - name: Package archive
+        shell: bash
+        run: |
+          TAG="${{ inputs.version || github.ref_name }}"
+          cd "../VSCode-win32-${{ matrix.arch }}"
+          7z a "$GITHUB_WORKSPACE/ephcode-win32-${{ matrix.arch }}-${TAG}.zip" .
+
+      - name: Collect installers
+        shell: bash
+        run: |
+          TAG="${{ inputs.version || github.ref_name }}"
+          find .build -name "*SystemSetup*.exe" | head -1 | xargs -I{} cp {} "ephcode-win32-${{ matrix.arch }}-${TAG}-system-setup.exe" || true
+          find .build -name "*UserSetup*.exe"   | head -1 | xargs -I{} cp {} "ephcode-win32-${{ matrix.arch }}-${TAG}-user-setup.exe"   || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.arch }}
+          path: |
+            ephcode-win32-${{ matrix.arch }}-*.zip
+            ephcode-win32-${{ matrix.arch }}-*-system-setup.exe
+            ephcode-win32-${{ matrix.arch }}-*-user-setup.exe
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # macOS — x64 (Intel) and arm64 (Apple Silicon)
+  # ───────────────────────────────────────────────────────────────────────────
+  build-macos:
+    name: macOS ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            os: macos-13        # last Intel runner
+            npm_arch: x64
+          - arch: arm64
+            os: macos-latest    # Apple Silicon
+            npm_arch: arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install system dependencies
+        run: brew install python3 pkg-config
+
+      - name: Install dependencies
+        env:
+          npm_config_arch: ${{ matrix.npm_arch }}
+          VSCODE_ARCH: ${{ matrix.arch }}
+        run: npm ci
+
+      - name: Build
+        env:
+          npm_config_arch: ${{ matrix.npm_arch }}
+          VSCODE_ARCH: ${{ matrix.arch }}
+        run: npm run gulp vscode-darwin-${{ matrix.arch }}
+
+      # ── macOS code signing ($99/yr Apple Developer account) ───────────────
+      # To enable:
+      #   1. Export your Developer ID Application certificate as a .p12
+      #   2. Add APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_TEAM_ID,
+      #      APPLE_ID, APPLE_APP_PASSWORD to repository secrets
+      #   3. Uncomment the step below
+      #
+      # - name: Sign and notarize
+      #   env:
+      #     APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      #     APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      #     APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      #     APPLE_ID: ${{ secrets.APPLE_ID }}
+      #     APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+      #   run: |
+      #     echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+      #     security create-keychain -p "" build.keychain
+      #     security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+      #     security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+      #     security default-keychain -s build.keychain
+      #     codesign --deep --force --verify --verbose \
+      #       --sign "Developer ID Application: Your Name ($APPLE_TEAM_ID)" \
+      #       "../VSCode-darwin-${{ matrix.arch }}/ephcode.app"
+      #     xcrun notarytool submit "../VSCode-darwin-${{ matrix.arch }}/ephcode.app" \
+      #       --apple-id "$APPLE_ID" --password "$APPLE_APP_PASSWORD" \
+      #       --team-id "$APPLE_TEAM_ID" --wait
+
+      - name: Package .zip
+        run: |
+          TAG="${{ inputs.version || github.ref_name }}"
+          cd "../VSCode-darwin-${{ matrix.arch }}"
+          zip -r "$GITHUB_WORKSPACE/ephcode-darwin-${{ matrix.arch }}-${TAG}.zip" "ephcode.app"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}
+          path: ephcode-darwin-${{ matrix.arch }}-*.zip
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Remote server — Linux x64 and arm64
+  # ───────────────────────────────────────────────────────────────────────────
+  build-server:
+    name: Server ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            npm_arch: x64
+          - arch: arm64
+            npm_arch: arm64
+            cross_cc: aarch64-linux-gnu-gcc
+            cross_cxx: aarch64-linux-gnu-g++
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Add swap space
+        run: |
+          sudo swapoff /swapfile 2>/dev/null || true
+          sudo rm -f /swapfile
+          sudo fallocate -l 12G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential pkg-config python3 \
+            libx11-dev libxkbfile-dev libsecret-1-dev libkrb5-dev
+
+      - name: Install arm64 cross-compilation toolchain
+        if: matrix.arch == 'arm64'
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+            libx11-dev:arm64 libxkbfile-dev:arm64 \
+            libsecret-1-dev:arm64 libkrb5-dev:arm64
+
+      - name: Install dependencies
+        env:
+          npm_config_arch: ${{ matrix.npm_arch }}
+          VSCODE_ARCH: ${{ matrix.arch }}
+          CC: ${{ matrix.cross_cc }}
+          CXX: ${{ matrix.cross_cxx }}
+        run: npm ci
+
+      - name: Build server
+        env:
+          npm_config_arch: ${{ matrix.npm_arch }}
+          VSCODE_ARCH: ${{ matrix.arch }}
+          CC: ${{ matrix.cross_cc }}
+          CXX: ${{ matrix.cross_cxx }}
+        run: npm run gulp vscode-reh-linux-${{ matrix.arch }}
+
+      - name: Package tarball
+        run: |
+          TAG="${{ inputs.version || github.ref_name }}"
+          cd ../vscode-reh-linux-${{ matrix.arch }}
+          tar czf "$GITHUB_WORKSPACE/ephcode-server-linux-${{ matrix.arch }}-${TAG}.tar.gz" .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server-linux-${{ matrix.arch }}
+          path: ephcode-server-linux-${{ matrix.arch }}-*.tar.gz
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Create GitHub release — only on real tag pushes, not manual dispatches
+  # ───────────────────────────────────────────────────────────────────────────
+  release:
+    name: Create Release
+    if: github.event_name == 'push'
+    needs: [build-linux, build-windows, build-macos, build-server]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Collect release assets
+        run: find artifacts -type f -exec mv {} . \;
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          COMMIT=$(git rev-parse HEAD)
+
+          gh release create "$TAG" \
+            ephcode-*.tar.gz \
+            ephcode-*.deb \
+            ephcode-*.rpm \
+            ephcode-*.zip \
+            ephcode-*-setup.exe \
+            --title "ephcode ${TAG}" \
+            --notes "## ephcode ${TAG}
+
+          Built from commit \`${COMMIT}\`.
+
+          | Platform | Formats | Architectures |
+          |----------|---------|---------------|
+          | Linux    | .tar.gz · .deb · .rpm | x64 · arm64 |
+          | Windows  | .zip · system setup · user setup | x64 · arm64 |
+          | macOS    | .zip (.app bundle) | x64 (Intel) · arm64 (Apple Silicon) |
+          | Server   | .tar.gz | x64 · arm64 |
+          "
