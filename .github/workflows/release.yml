@@ -218,7 +218,7 @@ jobs:
       matrix:
         include:
           - arch: x64
-            os: macos-13        # last Intel runner
+            os: macos-15-intel  # Intel runner (available until Aug 2027)
             npm_arch: x64
           - arch: arm64
             os: macos-latest    # Apple Silicon
