@@ -124,7 +124,7 @@ function buildWin32Setup(arch: string, target: string): task.CallbackTask {
 			definitions['ProxyNameLong'] = embedded.nameLong;
 		}
 
-		if (quality === 'stable' || quality === 'insider') {
+		if ((quality === 'stable' || quality === 'insider') && (product as { win32ContextMenu?: unknown }).win32ContextMenu) {
 			definitions['AppxPackage'] = `${quality === 'stable' ? 'code' : 'code_insider'}_${arch}.appx`;
 			definitions['AppxPackageDll'] = `${quality === 'stable' ? 'code' : 'code_insider'}_explorer_command_${arch}.dll`;
 			definitions['AppxPackageName'] = `${product.win32AppUserModelId}`;
