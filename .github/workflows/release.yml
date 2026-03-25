@@ -46,6 +46,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+          cache: npm
+
+      - name: Cache Electron and node-gyp
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/electron
+            ~/.cache/node-gyp
+          key: linux-${{ matrix.arch }}-electron-${{ hashFiles('.npmrc') }}
 
       - name: Add swap space
         run: |
@@ -165,6 +174,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+          cache: npm
+
+      - name: Cache Electron and node-gyp
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/AppData/Local/electron/Cache
+            ~/AppData/Local/node-gyp
+          key: windows-${{ matrix.arch }}-electron-${{ hashFiles('.npmrc') }}
 
       - name: Install dependencies
         env:
@@ -251,6 +269,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+          cache: npm
+
+      - name: Cache Electron and node-gyp
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/electron
+            ~/.cache/node-gyp
+          key: macos-${{ matrix.arch }}-electron-${{ hashFiles('.npmrc') }}
 
       - name: Install system dependencies
         run: brew install python3 pkg-config
@@ -327,6 +354,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+          cache: npm
+
+      - name: Cache Electron and node-gyp
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/electron
+            ~/.cache/node-gyp
+          key: server-${{ matrix.arch }}-electron-${{ hashFiles('.npmrc') }}
 
       - name: Add swap space
         run: |
