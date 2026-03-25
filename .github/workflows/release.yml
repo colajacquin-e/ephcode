@@ -91,14 +91,18 @@ jobs:
             sudo sed -i '/^URIs:/i Architectures: amd64' /etc/apt/sources.list.d/ubuntu.sources
           fi
           sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          # Install arm64 runtime libraries only (not -dev) to avoid
+          # libglib2.0-dev:arm64 conflicting with amd64 -dev-bin packages.
+          # Headers come from the amd64 -dev packages already installed above.
           sudo apt-get install -y \
-            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            libx11-dev:arm64 libxkbfile-dev:arm64 \
-            libkrb5-dev:arm64
-          # libsecret-1-dev:arm64 pulls in libglib2.0-dev:arm64 which conflicts
-          # with the amd64 -dev-bin package. Install just the runtime lib + symlink.
-          sudo apt-get install -y libsecret-1-0:arm64
+            libx11-6:arm64 libxkbfile1:arm64 \
+            libsecret-1-0:arm64 libkrb5-3:arm64
+          # Create linker symlinks so the cross-compiler can find the .so files
+          sudo ln -sf /usr/lib/aarch64-linux-gnu/libX11.so.6 /usr/lib/aarch64-linux-gnu/libX11.so
+          sudo ln -sf /usr/lib/aarch64-linux-gnu/libxkbfile.so.1 /usr/lib/aarch64-linux-gnu/libxkbfile.so
           sudo ln -sf /usr/lib/aarch64-linux-gnu/libsecret-1.so.0 /usr/lib/aarch64-linux-gnu/libsecret-1.so
+          sudo ln -sf /usr/lib/aarch64-linux-gnu/libkrb5.so.3 /usr/lib/aarch64-linux-gnu/libkrb5.so
 
       - name: Install dependencies
         env:
@@ -195,6 +199,12 @@ jobs:
           npm_config_arch: ${{ matrix.npm_arch }}
           VSCODE_ARCH: ${{ matrix.arch }}
         run: npm run gulp vscode-win32-${{ matrix.arch }}
+
+      # InnoSetup expects a tools/ dir (for inno_updater.exe in upstream VS Code).
+      # Create it empty so the wildcard match in code.iss doesn't error.
+      - name: Create empty tools directory
+        shell: bash
+        run: mkdir -p "../VSCode-win32-${{ matrix.arch }}/tools"
 
       - name: Build system installer
         env:
@@ -398,14 +408,16 @@ jobs:
             sudo sed -i '/^URIs:/i Architectures: amd64' /etc/apt/sources.list.d/ubuntu.sources
           fi
           sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          # Install arm64 runtime libraries only (not -dev) to avoid
+          # libglib2.0-dev:arm64 conflicting with amd64 -dev-bin packages.
           sudo apt-get install -y \
-            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            libx11-dev:arm64 libxkbfile-dev:arm64 \
-            libkrb5-dev:arm64
-          # libsecret-1-dev:arm64 pulls in libglib2.0-dev:arm64 which conflicts
-          # with the amd64 -dev-bin package. Install just the runtime lib + symlink.
-          sudo apt-get install -y libsecret-1-0:arm64
+            libx11-6:arm64 libxkbfile1:arm64 \
+            libsecret-1-0:arm64 libkrb5-3:arm64
+          sudo ln -sf /usr/lib/aarch64-linux-gnu/libX11.so.6 /usr/lib/aarch64-linux-gnu/libX11.so
+          sudo ln -sf /usr/lib/aarch64-linux-gnu/libxkbfile.so.1 /usr/lib/aarch64-linux-gnu/libxkbfile.so
           sudo ln -sf /usr/lib/aarch64-linux-gnu/libsecret-1.so.0 /usr/lib/aarch64-linux-gnu/libsecret-1.so
+          sudo ln -sf /usr/lib/aarch64-linux-gnu/libkrb5.so.3 /usr/lib/aarch64-linux-gnu/libkrb5.so
 
       - name: Install dependencies
         env:
