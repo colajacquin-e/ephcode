@@ -440,8 +440,13 @@ jobs:
       - name: Package tarball
         run: |
           TAG="${{ inputs.version || github.ref_name }}"
+          COMMIT=$(git rev-parse HEAD)
           cd ../vscode-reh-linux-${{ matrix.arch }}
+          # Version-tagged tarball for the main release
           tar czf "$GITHUB_WORKSPACE/ephcode-server-linux-${{ matrix.arch }}-${TAG}.tar.gz" .
+          # Commit-tagged tarball for open-remote-ssh server downloads
+          cp "$GITHUB_WORKSPACE/ephcode-server-linux-${{ matrix.arch }}-${TAG}.tar.gz" \
+             "$GITHUB_WORKSPACE/ephcode-server-linux-${{ matrix.arch }}-${COMMIT}.tar.gz"
 
       - uses: actions/upload-artifact@v7
         with:
@@ -493,3 +498,16 @@ jobs:
           | macOS    | .zip (.app bundle) | x64 (Intel) · arm64 (Apple Silicon) |
           | Server   | .tar.gz | x64 · arm64 |
           "
+
+          # Create a server-${commit} release for open-remote-ssh extension
+          # The extension downloads server tarballs by commit hash
+          server_assets=()
+          for f in ephcode-server-*-${COMMIT}.tar.gz; do
+            [ -e "$f" ] && server_assets+=("$f")
+          done
+          if [ ${#server_assets[@]} -gt 0 ]; then
+            gh release create "server-${COMMIT}" "${server_assets[@]}" \
+              --title "Server ${COMMIT:0:8}" \
+              --notes "Server build for commit ${COMMIT}. Used by open-remote-ssh extension." \
+              --prerelease
+          fi
