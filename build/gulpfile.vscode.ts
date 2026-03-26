@@ -455,7 +455,7 @@ function packageTask(platform: string, arch: string, sourceFolderName: string, d
 
 		const telemetry = fs.existsSync('.build/telemetry')
 			? gulp.src('.build/telemetry/**', { base: '.build/telemetry', dot: true })
-			: gulp.src([], { allowEmpty: true });
+			: gulp.src('doesnotexist', { allowEmpty: true });
 
 		const jsFilter = util.filter(data => !data.isDirectory() && /\.js$/.test(data.path));
 		const root = path.resolve(path.join(import.meta.dirname, '..'));
