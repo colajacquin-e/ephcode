@@ -41,9 +41,9 @@ jobs:
             cross_cxx: aarch64-linux-gnu-g++
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -150,7 +150,7 @@ jobs:
           find .build/linux -name "*.deb" | head -1 | xargs -I{} cp {} "ephcode-linux-${{ matrix.arch }}-${TAG}.deb" || true
           find .build/linux -name "*.rpm" | head -1 | xargs -I{} cp {} "ephcode-linux-${{ matrix.arch }}-${TAG}.rpm" || true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: linux-${{ matrix.arch }}
           path: |
@@ -173,9 +173,9 @@ jobs:
             npm_arch: arm64
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -249,7 +249,7 @@ jobs:
           find .build -name "*SystemSetup*.exe" | head -1 | xargs -I{} cp {} "ephcode-win32-${{ matrix.arch }}-${TAG}-system-setup.exe" || true
           find .build -name "*UserSetup*.exe"   | head -1 | xargs -I{} cp {} "ephcode-win32-${{ matrix.arch }}-${TAG}-user-setup.exe"   || true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: windows-${{ matrix.arch }}
           path: |
@@ -274,9 +274,9 @@ jobs:
             npm_arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -337,7 +337,7 @@ jobs:
           cd "../VSCode-darwin-${{ matrix.arch }}"
           zip -r "$GITHUB_WORKSPACE/ephcode-darwin-${{ matrix.arch }}-${TAG}.zip" "ephcode.app"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: macos-${{ matrix.arch }}
           path: ephcode-darwin-${{ matrix.arch }}-*.zip
@@ -359,9 +359,9 @@ jobs:
             cross_cxx: aarch64-linux-gnu-g++
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -443,7 +443,7 @@ jobs:
           cd ../vscode-reh-linux-${{ matrix.arch }}
           tar czf "$GITHUB_WORKSPACE/ephcode-server-linux-${{ matrix.arch }}-${TAG}.tar.gz" .
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: server-linux-${{ matrix.arch }}
           path: ephcode-server-linux-${{ matrix.arch }}-*.tar.gz
@@ -457,10 +457,10 @@ jobs:
     needs: [build-linux, build-windows, build-macos, build-server]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
 
