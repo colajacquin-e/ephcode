@@ -474,12 +474,13 @@ jobs:
           TAG="${{ github.ref_name }}"
           COMMIT=$(git rev-parse HEAD)
 
-          gh release create "$TAG" \
-            ephcode-*.tar.gz \
-            ephcode-*.deb \
-            ephcode-*.rpm \
-            ephcode-*.zip \
-            ephcode-*-setup.exe \
+          # Collect all release assets — use ls to expand globs safely
+          assets=()
+          for f in ephcode-*.tar.gz ephcode-*.deb ephcode-*.rpm ephcode-*.zip ephcode-*-setup.exe; do
+            [ -e "$f" ] && assets+=("$f")
+          done
+
+          gh release create "$TAG" "${assets[@]}" \
             --title "ephcode ${TAG}" \
             --notes "## ephcode ${TAG}
 
