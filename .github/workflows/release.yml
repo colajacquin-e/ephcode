@@ -454,11 +454,12 @@ jobs:
           path: ephcode-server-linux-${{ matrix.arch }}-*.tar.gz
 
   # ───────────────────────────────────────────────────────────────────────────
-  # Create GitHub release — only on real tag pushes, not manual dispatches
+  # Create GitHub release — on real tag pushes OR manual dispatch with a
+  # non-test version input (e.g. v1.0.0-beta2).
   # ───────────────────────────────────────────────────────────────────────────
   release:
     name: Create Release
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.version != 'test' && inputs.version != '')
     needs: [build-linux, build-windows, build-macos, build-server]
     runs-on: ubuntu-latest
     steps:
@@ -476,7 +477,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="${{ inputs.version || github.ref_name }}"
           COMMIT=$(git rev-parse HEAD)
 
           # Collect all release assets — use ls to expand globs safely
@@ -487,6 +488,7 @@ jobs:
 
           gh release create "$TAG" "${assets[@]}" \
             --title "ephcode ${TAG}" \
+            --target "$COMMIT" \
             --notes "## ephcode ${TAG}
 
           Built from commit \`${COMMIT}\`.
@@ -508,6 +510,7 @@ jobs:
           if [ ${#server_assets[@]} -gt 0 ]; then
             gh release create "server-${COMMIT}" "${server_assets[@]}" \
               --title "Server ${COMMIT:0:8}" \
+              --target "$COMMIT" \
               --notes "Server build for commit ${COMMIT}. Used by open-remote-ssh extension." \
               --prerelease
           fi
