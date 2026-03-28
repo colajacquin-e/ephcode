@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Disposable } from '../../../../base/common/lifecycle.js';
-import { AgentHostContribution } from '../browser/agentSessions/agentHost/agentHostChatContribution.js';
 import { autorun } from '../../../../base/common/observable.js';
 import { resolve } from '../../../../base/common/path.js';
 import { isMacintosh } from '../../../../base/common/platform.js';
@@ -247,8 +246,6 @@ registerWorkbenchContribution2(NativeBuiltinToolsContribution.ID, NativeBuiltinT
 registerWorkbenchContribution2(ChatCommandLineHandler.ID, ChatCommandLineHandler, WorkbenchPhase.BlockRestore);
 registerWorkbenchContribution2(ChatSuspendThrottlingHandler.ID, ChatSuspendThrottlingHandler, WorkbenchPhase.AfterRestored);
 registerWorkbenchContribution2(ChatLifecycleHandler.ID, ChatLifecycleHandler, WorkbenchPhase.AfterRestored);
-registerWorkbenchContribution2(AgentHostContribution.ID, AgentHostContribution, WorkbenchPhase.AfterRestored);
-
 // Register command for opening a new Agent Host session from the session type picker
 CommandsRegistry.registerCommand(
 	`workbench.action.chat.openNewChatSessionInPlace.${AgentSessionProviders.AgentHostCopilot}`,
