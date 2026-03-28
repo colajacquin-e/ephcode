@@ -108,6 +108,13 @@ jobs:
         env:
           npm_config_arch: ${{ matrix.npm_arch }}
           VSCODE_ARCH: ${{ matrix.arch }}
+          # VSCODE_REMOTE_CC/CXX are used by build/npm/postinstall.ts when
+          # installing native modules in the remote/ directory.  Without these,
+          # postinstall.ts strips CC/CXX before running npm in remote/, causing
+          # spdlog.node and watchdog.node to be compiled for the host arch (x64)
+          # instead of the target arch (arm64).
+          VSCODE_REMOTE_CC: ${{ matrix.cross_cc }}
+          VSCODE_REMOTE_CXX: ${{ matrix.cross_cxx }}
         run: |
           if [ -n "${{ matrix.cross_cc }}" ]; then export CC="${{ matrix.cross_cc }}"; fi
           if [ -n "${{ matrix.cross_cxx }}" ]; then export CXX="${{ matrix.cross_cxx }}"; fi
@@ -423,6 +430,13 @@ jobs:
         env:
           npm_config_arch: ${{ matrix.npm_arch }}
           VSCODE_ARCH: ${{ matrix.arch }}
+          # VSCODE_REMOTE_CC/CXX are used by build/npm/postinstall.ts when
+          # installing native modules in the remote/ directory.  Without these,
+          # postinstall.ts strips CC/CXX before running npm in remote/, causing
+          # spdlog.node and watchdog.node to be compiled for the host arch (x64)
+          # instead of the target arch (arm64).
+          VSCODE_REMOTE_CC: ${{ matrix.cross_cc }}
+          VSCODE_REMOTE_CXX: ${{ matrix.cross_cxx }}
         run: |
           if [ -n "${{ matrix.cross_cc }}" ]; then export CC="${{ matrix.cross_cc }}"; fi
           if [ -n "${{ matrix.cross_cxx }}" ]; then export CXX="${{ matrix.cross_cxx }}"; fi
