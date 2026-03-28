@@ -30,6 +30,11 @@ export interface IXtermCore {
 			value?: unknown;
 		};
 	};
+
+	_overviewRulerRenderer?: {
+		_animationFrame: number | undefined;
+		_queueRefresh(updateCanvasDimensions?: boolean, updateAnchor?: boolean): void;
+	};
 }
 
 export interface IBufferLine {

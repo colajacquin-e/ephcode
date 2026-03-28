@@ -858,6 +858,15 @@ export class XtermTerminal extends Disposable implements IXtermTerminal, IDetach
 			// WebGL renderer cell dimensions differ from the DOM renderer, make sure the terminal
 			// gets resized after the webgl addon is loaded
 			this._onDidRequestRefreshDimensions.fire();
+			// The OverviewRulerRenderer schedules its first requestAnimationFrame in its constructor,
+			// which fires before the WebGL renderer is ready. This leaves _animationFrame set to a
+			// completed (but unreset) frame ID, permanently blocking future refreshes. Reset it now
+			// that the renderer is available so decorations render correctly.
+			const overviewRulerRenderer = this._core._overviewRulerRenderer;
+			if (overviewRulerRenderer?._animationFrame !== undefined) {
+				overviewRulerRenderer._animationFrame = undefined;
+				overviewRulerRenderer._queueRefresh(true);
+			}
 			// Uncomment to add the texture atlas to the DOM
 			// setTimeout(() => {
 			// 	if (this._webglAddon?.textureAtlas) {
