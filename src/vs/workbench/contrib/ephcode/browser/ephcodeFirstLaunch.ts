@@ -19,6 +19,7 @@ const EPHCODE_EXTENSIONS: { id: string; name: string }[] = [
 	{ id: 'llvm-vs-code-extensions.vscode-clangd', name: 'clangd (C/C++)' },
 	{ id: 'ms-vscode.cmake-tools', name: 'CMake Tools' },
 	{ id: 'eamodio.gitlens', name: 'GitLens' },
+	{ id: 'tintinweb.graphviz-interactive-preview', name: 'Graphviz Interactive Preview' },
 	{ id: 'SirTori.indenticator', name: 'Indenticator' },
 	{ id: 'ms-python.python', name: 'Python' },
 	{ id: 'ms-pyright.pyright', name: 'Pyright' },
