@@ -8,7 +8,7 @@ import { IWorkbenchContribution } from '../../../common/contributions.js';
 import { IStorageService, StorageScope, StorageTarget } from '../../../../platform/storage/common/storage.js';
 import { IHostService } from '../../../services/host/browser/host.js';
 import { IExtensionGalleryService, IExtensionInfo } from '../../../../platform/extensionManagement/common/extensionManagement.js';
-import { IWorkbenchExtensionManagementService } from '../../../services/extensionManagement/common/extensionManagement.js';
+import { IExtensionManagementServerService, IWorkbenchExtensionManagementService } from '../../../services/extensionManagement/common/extensionManagement.js';
 import { CancellationToken } from '../../../../base/common/cancellation.js';
 import { mainWindow } from '../../../../base/browser/window.js';
 
@@ -19,6 +19,7 @@ const EPHCODE_EXTENSIONS: { id: string; name: string }[] = [
 	{ id: 'llvm-vs-code-extensions.vscode-clangd', name: 'clangd (C/C++)' },
 	{ id: 'ms-vscode.cmake-tools', name: 'CMake Tools' },
 	{ id: 'eamodio.gitlens', name: 'GitLens' },
+	{ id: 'tintinweb.graphviz-interactive-preview', name: 'Graphviz Interactive Preview' },
 	{ id: 'SirTori.indenticator', name: 'Indenticator' },
 	{ id: 'ms-python.python', name: 'Python' },
 	{ id: 'ms-pyright.pyright', name: 'Pyright' },
@@ -37,6 +38,7 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 		@IHostService private readonly hostService: IHostService,
 		@IExtensionGalleryService private readonly galleryService: IExtensionGalleryService,
 		@IWorkbenchExtensionManagementService private readonly extensionManagementService: IWorkbenchExtensionManagementService,
+		@IExtensionManagementServerService private readonly extensionManagementServerService: IExtensionManagementServerService,
 	) {
 		super();
 		this.showFirstLaunchPrompt();
@@ -400,7 +402,16 @@ export class EphcodeFirstLaunchContribution extends Disposable implements IWorkb
 				const extName = EPHCODE_EXTENSIONS.find(e => e.id.toLowerCase() === extension.identifier.id.toLowerCase())?.name || extension.identifier.id;
 				try {
 					statusText.textContent = `Installing ${extName}...`;
-					await this.extensionManagementService.installFromGallery(extension);
+					try {
+						await this.extensionManagementService.installFromGallery(extension);
+					} catch {
+						// Local install failed — fall back to remote server if available
+						const remoteServer = this.extensionManagementServerService.remoteExtensionManagementServer;
+						if (!remoteServer) {
+							throw new Error(`No remote server available`);
+						}
+						await this.extensionManagementService.installFromGallery(extension, undefined, [remoteServer]);
+					}
 					installed++;
 					progressFill.style.width = `${(installed / total) * 100}%`;
 					addLog(`✓ ${extName}`, '#779e7f');
