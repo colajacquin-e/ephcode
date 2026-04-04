@@ -49,7 +49,7 @@ jobs:
           cache: npm
 
       - name: Cache Electron and node-gyp
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cache/electron
@@ -188,7 +188,7 @@ jobs:
           cache: npm
 
       - name: Cache Electron and node-gyp
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/AppData/Local/electron/Cache
@@ -289,7 +289,7 @@ jobs:
           cache: npm
 
       - name: Cache Electron and node-gyp
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/Library/Caches/electron
@@ -374,7 +374,7 @@ jobs:
           cache: npm
 
       - name: Cache Electron and node-gyp
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cache/electron
